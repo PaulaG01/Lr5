@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="cities">
+        <item>Minsk</item>
+        <item>Krakow</item>
+        <item>Moscow</item>
+    </string-array>
+    <string-array name="positions">
+        <item>Junior</item>
+        <item>Middle</item>
+        <item>Senior</item>
+    </string-array>
+</resources>
