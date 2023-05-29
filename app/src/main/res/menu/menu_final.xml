@@ -6,6 +6,16 @@
         android:orderInCategory="100"
         android:title="Создать визитку"
         app:showAsAction="never"/>
+    <item
+        android:id="@+id/sortAsc"
+        android:orderInCategory="100"
+        android:title="Сначала новые"
+        app:showAsAction="never"/>
+    <item
+        android:id="@+id/sortDesc"
+        android:orderInCategory="100"
+        android:title="Снаала старые"
+        app:showAsAction="never"/>
 
     <item
         android:id="@+id/appSearchBar"

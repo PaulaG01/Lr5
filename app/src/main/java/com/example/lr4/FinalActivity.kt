@@ -1,6 +1,8 @@
 package com.example.lr4
 
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.view.ContextMenu
 import android.view.ContextMenu.ContextMenuInfo
@@ -18,6 +20,7 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.view.MenuItemCompat
 import com.example.lr4.malina.VacancyFilesHelper
 import com.example.lr4.malina.VacancyVar
+import java.io.File
 
 
 class FinalActivity : AppCompatActivity() {
@@ -26,6 +29,7 @@ class FinalActivity : AppCompatActivity() {
     private var customAdapter: CustomAdapter? = null
     lateinit var vacanciesLV: ListView
     lateinit var vacanciesList: ArrayList<VacancyVar>
+    lateinit var imagesList: ArrayList<Bitmap?>
     private lateinit var searchView: SearchView
 
     private val CONTEXT_SHOW: Int = 1
@@ -42,7 +46,8 @@ class FinalActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
 
         vacanciesList = populateList()
-        customAdapter = CustomAdapter(this, vacanciesList!!)
+        imagesList = populateImagesList()
+        customAdapter = CustomAdapter(this, vacanciesList!!, imagesList!!)
         vacanciesLV!!.adapter = customAdapter
         vacanciesLV.setOnItemClickListener { adapterView, view, position, l ->
             val id: Int = (customAdapter?.getItem(position) as VacancyVar).id
@@ -55,6 +60,20 @@ class FinalActivity : AppCompatActivity() {
         registerForContextMenu(vacanciesLV)
     }
 
+    private fun populateImagesList(): ArrayList<Bitmap?> {
+        val list = ArrayList<Bitmap?>()
+
+        val vacancies = VacancyFilesHelper.readVacancies(this)
+        for (i in 0 until vacancies.count()) {
+            val imgFile = File(this.filesDir, "img_${vacancies[i].id}.png")
+            var myBitmap: Bitmap? = null
+            if (imgFile.exists()) {
+                myBitmap = BitmapFactory.decodeFile(imgFile.absolutePath)
+            }
+            list.add(myBitmap)
+        }
+        return list
+    }
 
     private fun populateList(): ArrayList<VacancyVar> {
         val list = ArrayList<VacancyVar>()
@@ -102,6 +121,12 @@ class FinalActivity : AppCompatActivity() {
         if (id == R.id.action_add_item) {
             startActivity(Intent(this, MainActivity::class.java))
             finish()
+        }
+        if (id == R.id.sortAsc) {
+            customAdapter?.sort(0)
+        }
+        if (id == R.id.sortDesc) {
+            customAdapter?.sort(1)
         }
 
         return super.onOptionsItemSelected(item);
