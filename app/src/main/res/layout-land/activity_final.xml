@@ -31,11 +31,19 @@
 
         <androidx.fragment.app.FragmentContainerView
             android:id="@+id/fragmentContainerItems"
+            android:layout_width="300dp"
+            android:layout_height="0dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textView7" />
+
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/fragmentContainerDetails"
             android:layout_width="0dp"
             android:layout_height="0dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/fragmentContainerItems"
             app:layout_constraintTop_toBottomOf="@+id/textView7" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>

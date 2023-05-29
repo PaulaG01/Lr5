@@ -1,6 +1,7 @@
 package com.example.lr4
 
 import android.content.Intent
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Bundle
@@ -15,22 +16,18 @@ import android.widget.ListView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import android.widget.SearchView
-import android.widget.Toast
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.MenuItemCompat
+import androidx.fragment.app.FragmentContainerView
+import androidx.fragment.app.commit
 import com.example.lr4.malina.VacancyFilesHelper
 import com.example.lr4.malina.VacancyVar
-import java.io.File
 
 
 class FinalActivity : AppCompatActivity() {
-    private lateinit var linLayout: LinearLayout
-
-    private var customAdapter: CustomAdapter? = null
-    lateinit var vacanciesLV: ListView
-    lateinit var vacanciesList: ArrayList<VacancyVar>
-    lateinit var imagesList: ArrayList<Bitmap?>
     private lateinit var searchView: SearchView
+
+    private lateinit var listFragment : ListFragment
 
     private val CONTEXT_SHOW: Int = 1
     private val CONTEXT_DELETE: Int = 2
@@ -39,55 +36,40 @@ class FinalActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_final)
 
-        linLayout = findViewById<LinearLayout>(R.id.ll)
-        vacanciesLV = findViewById(R.id.vacLv)
-
         val toolbar: Toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
 
-        vacanciesList = populateList()
-        imagesList = populateImagesList()
-        customAdapter = CustomAdapter(this, vacanciesList!!, imagesList!!)
-        vacanciesLV!!.adapter = customAdapter
-        vacanciesLV.setOnItemClickListener { adapterView, view, position, l ->
-            val id: Int = (customAdapter?.getItem(position) as VacancyVar).id
+        if (savedInstanceState == null) {
+            listFragment = ListFragment()
+            supportFragmentManager.commit {
+                setReorderingAllowed(true)
+                add(R.id.fragmentContainerItems, listFragment)
+            }
+        }
+        else
+        {
+            val fragmentContainerItems = findViewById<FragmentContainerView>(R.id.fragmentContainerItems)
+            listFragment = fragmentContainerItems.getFragment()
+        }
+    }
+
+    fun showItem(id: Int) {
+        val orientation = getResources().getConfiguration().orientation
+        if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            val viewFragment = ItemViewFragment()
+            viewFragment.arguments = Bundle()
+            viewFragment.arguments?.putInt("vacancyId", id)
+            supportFragmentManager.commit {
+                setReorderingAllowed(true)
+                replace(R.id.fragmentContainerDetails, viewFragment)
+                addToBackStack(null)
+            }
+        } else {
             val intent = Intent(this, VacancyDetailsActivity::class.java)
             intent.putExtra("vacancyId", id)
             startActivity(intent)
             finish()
         }
-
-        registerForContextMenu(vacanciesLV)
-    }
-
-    private fun populateImagesList(): ArrayList<Bitmap?> {
-        val list = ArrayList<Bitmap?>()
-
-        val vacancies = VacancyFilesHelper.readVacancies(this)
-        for (i in 0 until vacancies.count()) {
-            val imgFile = File(this.filesDir, "img_${vacancies[i].id}.png")
-            var myBitmap: Bitmap? = null
-            if (imgFile.exists()) {
-                myBitmap = BitmapFactory.decodeFile(imgFile.absolutePath)
-            }
-            list.add(myBitmap)
-        }
-        return list
-    }
-
-    private fun populateList(): ArrayList<VacancyVar> {
-        val list = ArrayList<VacancyVar>()
-
-        val vacancies = VacancyFilesHelper.readVacancies(this)
-        for (i in 0 until vacancies.count()) {
-            val vacancy = VacancyVar()
-            vacancy.title = vacancies[i].title
-            vacancy.photo = vacancies[i].photo
-            vacancy.id = vacancies[i].id
-            list.add(vacancy)
-        }
-
-        return list
     }
 
     private fun cofigureSearch() {
@@ -98,7 +80,7 @@ class FinalActivity : AppCompatActivity() {
 
             override fun onQueryTextChange(newText: String?): Boolean {
                 val text = newText!!
-                customAdapter?.filter(text)
+                listFragment.customAdapter.filter(text)
                 return false
             }
         })
@@ -123,10 +105,10 @@ class FinalActivity : AppCompatActivity() {
             finish()
         }
         if (id == R.id.sortAsc) {
-            customAdapter?.sort(0)
+            listFragment.customAdapter.sort(0)
         }
         if (id == R.id.sortDesc) {
-            customAdapter?.sort(1)
+            listFragment.customAdapter.sort(1)
         }
 
         return super.onOptionsItemSelected(item);
@@ -135,8 +117,8 @@ class FinalActivity : AppCompatActivity() {
     override fun onCreateContextMenu(menu: ContextMenu, v: View?, menuInfo: ContextMenuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo)
         val vacancy = menuInfo as AdapterContextMenuInfo
-        val title: String = (customAdapter?.getItem(vacancy.position) as VacancyVar).title
-        val id: Int = (customAdapter?.getItem(vacancy.position) as VacancyVar).id
+        val title: String = (listFragment.customAdapter.getItem(vacancy.position) as VacancyVar).title
+        val id: Int = (listFragment.customAdapter.getItem(vacancy.position) as VacancyVar).id
         menu.setHeaderTitle("$title --- $id")
         menu.add(Menu.NONE, CONTEXT_DELETE, Menu.NONE, "Удалить")
         menu.add(Menu.NONE, CONTEXT_SHOW, Menu.NONE, "Редактировать")
@@ -145,7 +127,7 @@ class FinalActivity : AppCompatActivity() {
     override fun onContextItemSelected(item: MenuItem): Boolean {
         val intent = Intent(this, VacancyDetailsActivity::class.java)
         val vacancy = item.menuInfo as AdapterContextMenuInfo
-        val id: Int = (customAdapter?.getItem(vacancy.position) as VacancyVar).id
+        val id: Int = (listFragment.customAdapter.getItem(vacancy.position) as VacancyVar).id
         intent.putExtra("vacancyId", id)
 
         when (item.itemId) {
@@ -179,15 +161,5 @@ class FinalActivity : AppCompatActivity() {
         val alert = builder.create()
         alert.show()
     }
-
-//    private fun displayVacancies() {
-//        val vacancies = VacancyFilesHelper.readVacancies(this)
-//
-//        for (i in 0 until vacancies.count()) {
-//            val card = ElementsCreationHelper.createCard(this, linLayout, vacancies[i])
-//            card.id = vacancies[i].id
-//            registerForContextMenu(card)
-//        }
-//    }
 
 }
